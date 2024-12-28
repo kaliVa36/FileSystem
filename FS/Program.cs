@@ -16,7 +16,7 @@ namespace FileSystem
             if (path == null) throw new ArgumentNullException(nameof(path));
             if (!File.Exists(path.AddFileName()))
             {
-                metadata = FileSystemData.FileSystem.InitializeFileSystem(path);
+                metadata = FileSystemData.FileSystem.InitializeFileSystem(path.AddFileName());
             }
             else
             {
@@ -24,8 +24,13 @@ namespace FileSystem
             }
             FSFile.FileMetadata metadataFile = new FSFile.FileMetadata("text.txt", "Hello, my name is Lenchezar. Are you 06, cause I like you?");
 
-            FSFile.WriteData(metadataFile, path.AddFileName(), metadata.FirstAvailableAddress, metadata.MaxFileTitleSize);
-            FSFile.ReadData(path.AddFileName(), metadata.FirstAvailableAddress);
+            //long? address = FSFile.WriteData(metadataFile, path.AddFileName(), metadata.FirstAvailableAddress, metadata.MaxFileTitleSize);
+            FSFile.ReadData(path.AddFileName(), metadata.FirstAddress);
+
+            //if (address != null)
+            //{
+            //    FileSystemData.FileSystem.ChnageFirstAvailableAddress(filePath: path.AddFileName(), newAddress: address ?? 0);
+            //}
         }
     }
 }

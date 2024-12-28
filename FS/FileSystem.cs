@@ -82,7 +82,7 @@ namespace FileSystemData
             else return null;
         }
 
-        public static void WriteData(FileSystemMetadata data, string filePath, long startAddress, int size = 0)
+        public static long? WriteData(FileSystemMetadata data, string filePath, long startAddress, int size = 0)
         {
             using (var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
             {
@@ -99,8 +99,10 @@ namespace FileSystemData
                     long sizeOfMetadata = stream.Position;
                     // Skipping block size to write the new size into first address
                     writer.Seek(sizeof(int), SeekOrigin.Begin);
-                    writer.Write(sizeOfMetadata);
-                    writer.Write(sizeOfMetadata);
+                    writer.Write(BitConverter.GetBytes(sizeOfMetadata));
+                    writer.Write(BitConverter.GetBytes(sizeOfMetadata));
+
+                    return null;
                 }
             }
         }
@@ -130,6 +132,17 @@ namespace FileSystemData
                         maxFileSize: maxFileSize,
                         maxFileTitleSize: maxFileTitleSize
                     );
+                }
+            }
+        }
+        public static void ChnageFirstAvailableAddress(long newAddress, string filePath)
+        {
+            using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Write))
+            {
+                using (var writer = new BinaryWriter(stream))
+                {
+                    writer.Seek(sizeof(int) + sizeof(long), SeekOrigin.Begin);
+                    writer.Write(BitConverter.GetBytes(newAddress));
                 }
             }
         }

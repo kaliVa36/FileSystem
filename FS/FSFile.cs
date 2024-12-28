@@ -20,7 +20,7 @@ namespace FS
             }
         }
 
-        public static void WriteData(FileMetadata data, string filePath, long startAddress, int size)
+        public static long? WriteData(FileMetadata data, string filePath, long startAddress, int size)
         {
             using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Write))
             {
@@ -31,6 +31,7 @@ namespace FS
                     writer.Write(data.FileName.PadZeroes(size));
                     writer.Write(BitConverter.GetBytes(text.Length));
                     writer.Write(text);
+                    return stream.Position;
                 }
             }
         }
