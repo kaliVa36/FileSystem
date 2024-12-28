@@ -24,13 +24,13 @@ namespace FileSystem
             }
             FSFile.FileMetadata metadataFile = new FSFile.FileMetadata("text.txt", "Hello, my name is Lenchezar. Are you 06, cause I like you?");
 
-            //long? address = FSFile.WriteData(metadataFile, path.AddFileName(), metadata.FirstAvailableAddress, metadata.MaxFileTitleSize);
-            FSFile.ReadData(path.AddFileName(), metadata.FirstAddress);
+            long? address = FSFile.WriteData(metadataFile, path.AddFileName(), metadata.FirstAvailableAddress, metadata.MaxFileTitleSize);
+            FSFile.ReadData(path.AddFileName(), metadata.FirstAvailableAddress);
 
-            //if (address != null)
-            //{
-            //    FileSystemData.FileSystem.ChnageFirstAvailableAddress(filePath: path.AddFileName(), newAddress: address ?? 0);
-            //}
+            if (address != null)
+            {
+                FileSystemData.FileSystem.ChnageFirstAvailableAddress(filePath: path.AddFileName(), newAddress: address ?? 0);
+            }
         }
     }
 }
