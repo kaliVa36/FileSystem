@@ -1,7 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
-using FS;
-using FileSystemData;
 using FS.Extensions;
+using FS.data;
+using FS;
 
 namespace FileSystem
 {
@@ -16,20 +16,29 @@ namespace FileSystem
             if (path == null) throw new ArgumentNullException(nameof(path));
             if (!File.Exists(path.AddFileName()))
             {
-                metadata = FileSystemData.FileSystem.InitializeFileSystem(path.AddFileName());
+                metadata = FS.data.FileSystem.InitializeFileSystem(path.AddFileName());
             }
             else
             {
-                metadata = FileSystemData.FileSystem.ReadData(path.AddFileName(), 0);
+                metadata = FS.data.FileSystem.ReadData(path.AddFileName(), 0);
             }
-            FSFile.FileMetadata metadataFile = new FSFile.FileMetadata("text.txt", "Hello, my name is Lenchezar. Are you 06, cause I like you?");
+            // mocked data
+            //FSFile.FileMetadata metadataFile = new FSFile.FileMetadata("text.txt", "Hello, my name is Lenchezar. Are you 06, cause I like you?");
+            //long? address = FSFile.WriteData(metadataFile, path.AddFileName(), metadata.FirstAvailableAddress, metadata.MaxFileTitleSize);
+            //FSFile.ReadData(path.AddFileName(), metadata.FirstAvailableAddress);
 
-            long? address = FSFile.WriteData(metadataFile, path.AddFileName(), metadata.FirstAvailableAddress, metadata.MaxFileTitleSize);
-            FSFile.ReadData(path.AddFileName(), metadata.FirstAvailableAddress);
-
-            if (address != null)
+            //if (address != null)
+            //{
+            //    FileSystemData.FileSystem.ChnageFirstAvailableAddress(filePath: path.AddFileName(), newAddress: address ?? 0);
+            //}
+            while (true)
             {
-                FileSystemData.FileSystem.ChnageFirstAvailableAddress(filePath: path.AddFileName(), newAddress: address ?? 0);
+                Console.WriteLine("Enter command: ");
+                string? command = Console.ReadLine();
+                if (command != null)
+                {
+                    FileCommands.callCommand(command.SplitByChar(' '));
+                }
             }
         }
     }

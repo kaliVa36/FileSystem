@@ -1,7 +1,7 @@
 ﻿using Constants;
 using FS;
 
-namespace FileSystemData
+namespace FS.data
 {
     public class FileSystemMetadata
     {
@@ -21,7 +21,7 @@ namespace FileSystemData
         }
     }
 
-    internal class FileSystem: IFileOperations<FileSystemMetadata>
+    internal class FileSystem : IFileOperations<FileSystemMetadata>
     {
         public static FileSystemMetadata InitializeFileSystem(string path)
         {
@@ -59,7 +59,7 @@ namespace FileSystemData
             return ReadData(path, 0);
         }
 
-        public static string? inputComponent(string message, string valueMessage, string errorMesassge) 
+        public static string? inputComponent(string message, string valueMessage, string errorMesassge)
         {
             Console.WriteLine(message);
             string? answer = Console.ReadLine();
@@ -72,7 +72,7 @@ namespace FileSystemData
             {
                 Console.WriteLine(valueMessage);
                 string? userInput = Console.ReadLine();
-                while ((userInput == null) || (!int.TryParse(userInput, out int parsedSize) && parsedSize <= 0))
+                while (userInput == null || !int.TryParse(userInput, out int parsedSize) && parsedSize <= 0)
                 {
                     Console.WriteLine(errorMesassge);
                     userInput = Console.ReadLine();

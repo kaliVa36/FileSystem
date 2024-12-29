@@ -1,8 +1,8 @@
 ﻿using FS.Extensions;
 using System.Text;
-using static FS.FSFile;
+using static FS.data.FSFile;
 
-namespace FS
+namespace FS.data
 {
     internal class FSFile : IFileOperations<FileMetadata>
     {

@@ -1,4 +1,5 @@
 ﻿using Constants;
+using FS.data;
 
 namespace FS.Extensions
 {
@@ -42,6 +43,7 @@ namespace FS.Extensions
                 }
             }
 
+            // Reverse the char[]
             int start = 0;
             while (start < count)
             {
@@ -51,6 +53,22 @@ namespace FS.Extensions
 
                 start++;
                 count--;
+            }
+
+            // Check if its supported
+            FileTypeEnum[] types = (FileTypeEnum[])Enum.GetValues(typeof(FileTypeEnum));
+            bool flag = false;
+            for (int i = 0; i < types.Length - 1; i++)
+            {
+                if (new string(type) == types[i].ToString())
+                {
+                    flag = true;
+                }
+            }
+
+            if (!flag) 
+            { 
+                throw new Exception(ErrorConstants.FileNotSupported);
             }
             return new string(type);
         }
