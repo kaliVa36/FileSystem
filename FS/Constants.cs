@@ -10,6 +10,7 @@
         public const string LocationNotExist = "Location does not exist";
         public const string FileNotSupported = "This file type is not supported";
         public const string InvalidCommand = "Invalid command";
+        public const string TitleTooLong = "Title is too long. Max size for a title is ";
     }
 
     public static class MetadataConstants

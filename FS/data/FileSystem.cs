@@ -107,7 +107,7 @@ namespace FS.data
             }
         }
 
-        public static FileSystemMetadata ReadData(string filePath, long startAddress)
+        public static FileSystemMetadata ReadData(string filePath, long startAddress, int maxFileTitleSize = 0)
         {
             using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
             {
@@ -122,7 +122,7 @@ namespace FS.data
                     Console.WriteLine("firstAvailableAddress: " + firstAvailableAddress);
                     int maxFileSize = BitConverter.ToInt32(reader.ReadBytes(sizeof(int)), 0);
                     Console.WriteLine("MaxFileSize: " + maxFileSize);
-                    int maxFileTitleSize = BitConverter.ToInt32(reader.ReadBytes(sizeof(int)), 0);
+                    int maxFileTitle = BitConverter.ToInt32(reader.ReadBytes(sizeof(int)), 0);
                     Console.WriteLine("maxFileTitle: " + maxFileTitleSize);
 
                     return new FileSystemMetadata(
@@ -130,12 +130,12 @@ namespace FS.data
                         firstAddress: firstAddress,
                         firstAvailableAddress: firstAvailableAddress,
                         maxFileSize: maxFileSize,
-                        maxFileTitleSize: maxFileTitleSize
+                        maxFileTitleSize: maxFileTitle
                     );
                 }
             }
         }
-        public static void ChnageFirstAvailableAddress(long newAddress, string filePath)
+        public static void ChangeFirstAvailableAddress(long newAddress, string filePath)
         {
             using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Write))
             {

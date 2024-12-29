@@ -31,13 +31,14 @@ namespace FileSystem
             //{
             //    FileSystemData.FileSystem.ChnageFirstAvailableAddress(filePath: path.AddFileName(), newAddress: address ?? 0);
             //}
+            FSFile.ReadData(path.AddFileName(), metadata.FirstAddress, metadata.MaxFileTitleSize);
             while (true)
             {
                 Console.WriteLine("Enter command: ");
                 string? command = Console.ReadLine();
                 if (command != null)
                 {
-                    FileCommands.callCommand(command.SplitByChar(' '));
+                    FileCommands.callCommand(command.SplitByChar(' '), metadata, path.AddFileName());
                 }
             }
         }

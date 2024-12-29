@@ -5,7 +5,7 @@ namespace FS
 {
     public class FileCommands
     {
-        public static void callCommand(string[] command)
+        public static void callCommand(string[] command, FileSystemMetadata metadata, string containerPath)
         {
             Console.WriteLine(command[0]);
             switch (command[0])
@@ -16,7 +16,7 @@ namespace FS
                         Console.WriteLine(ErrorConstants.InvalidCommand);
                         break;
                     }
-                    cpin();
+                    cpin(containerPath, command[1], command[2], metadata.MaxFileTitleSize, metadata.FirstAvailableAddress);
                     break;
                 case var cmd when cmd == FileCommandsEnum.ls.ToString():
                     if (command.Length != (int)FileCommandsEnum.ls) 
@@ -38,21 +38,29 @@ namespace FS
                     if (command.Length != (int)FileCommandsEnum.cp) 
                     {
                         Console.WriteLine(ErrorConstants.InvalidCommand);
-                        Console.WriteLine(1);
                         break;
                     }
                     cpout();
                     break;
                 default:
                     Console.WriteLine(ErrorConstants.InvalidCommand);
-                    Console.WriteLine(2);
                     break;
             }
         }
 
-        public static void cpin()
+        public static void cpin(string containerPath, string path, string fileName, int maxFileTitleSize, long firstAvailableAddress)
         {
-            Console.WriteLine("cpin");
+            if (!File.Exists(path))
+            { 
+                Console.WriteLine(ErrorConstants.LocationNotExist);
+                return;
+            }
+            if (fileName.Length > maxFileTitleSize)
+            {
+                Console.WriteLine(ErrorConstants.TitleTooLong + maxFileTitleSize);
+                return;
+            }
+            FSFile.ReadFile(containerPath: containerPath, filePath: path, newFileName: fileName, firstAvailbleAddress: firstAvailableAddress, maxFileTitleSize: maxFileTitleSize);
         }
 
         public static void ls()
