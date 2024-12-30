@@ -1,6 +1,5 @@
 ﻿using Constants;
 using FS.Extensions;
-using System.Drawing;
 using System.Text;
 using static FS.data.FSFile;
 
@@ -111,7 +110,7 @@ namespace FS.data
 
         public static void WriteFileFromContainer(string conteinerPath, string filePath, long address, long size)
         {
-            int bufferSize = FileConstants.ReadFileBuffer; // Example buffer size
+            int bufferSize = FileConstants.ReadFileBuffer;
 
             using (FileStream stream = new FileStream(conteinerPath, FileMode.Open, FileAccess.Read))
             {

@@ -119,7 +119,6 @@ namespace FS
 
                         if (fileName == title)
                         {
-                            Console.WriteLine("1");
                             long position = stream.Position;
                             stream.Close();
                             FSFile.WriteFileFromContainer(containerPath, filePath, position, size);
