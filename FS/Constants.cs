@@ -22,5 +22,6 @@
     public static class FileConstants
     {
         public const int FileTypeMaxCharacters = 4;
+        public const int ReadFileBuffer = 16;
     }
 }

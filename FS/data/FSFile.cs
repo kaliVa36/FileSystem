@@ -1,4 +1,5 @@
-﻿using FS.Extensions;
+﻿using Constants;
+using FS.Extensions;
 using System.Drawing;
 using System.Text;
 using static FS.data.FSFile;
@@ -50,10 +51,10 @@ namespace FS.data
                     string title = Encoding.UTF8.GetString(buffer, 0, bytesRead);
                     Console.WriteLine(title.TrimZeroes());
 
-                    int size = BitConverter.ToInt32(reader.ReadBytes(sizeof(int)), 0);
+                    long size = BitConverter.ToInt64(reader.ReadBytes(sizeof(long)), 0);
                     Console.WriteLine(size);
 
-                    byte[] content = reader.ReadBytes(size);
+                    byte[] content = reader.ReadBytes((int)size);
                     Console.WriteLine(Encoding.UTF8.GetString(content));
                 }
                 return null;
@@ -62,7 +63,7 @@ namespace FS.data
 
         public static void ReadFile(string containerPath, string filePath, long firstAvailbleAddress, int maxFileTitleSize, string newFileName)
         {
-            int bufferSize = 16; // Example buffer size
+            int bufferSize = FileConstants.ReadFileBuffer; // Example buffer size
             long lastStreamPosition = 0;
             long updatedSizePosition = 0;
             int sizeOfFile = 0;
@@ -79,11 +80,11 @@ namespace FS.data
                         byte[] title = Encoding.UTF8.GetBytes(newFileName.PadZeroes(maxFileTitleSize));
                         stream.Write(title);
                         updatedSizePosition = stream.Position;
-                        stream.Write(BitConverter.GetBytes(0)); // will change later
+                        stream.Write(BitConverter.GetBytes(0L)); // will change later
                         while ((bytesRead = file.Read(buffer, 0, buffer.Length)) > 0)
                         {
                             writer.Write(buffer, 0, bytesRead);
-                            sizeOfFile += Encoding.UTF8.GetString(buffer).Length;
+                            sizeOfFile += bytesRead;
                         }
                         lastStreamPosition = stream.Position;
                     }

@@ -1,5 +1,7 @@
 ﻿using Constants;
 using FS.data;
+using FS.Extensions;
+using System.Text;
 
 namespace FS
 {
@@ -24,7 +26,7 @@ namespace FS
                         Console.WriteLine(ErrorConstants.InvalidCommand);
                         break;
                     }
-                    ls();
+                    ls(containerPath, metadata.MaxFileTitleSize, metadata.FirstAddress, metadata.FirstAvailableAddress);
                     break;
                 case var cmd when cmd == FileCommandsEnum.rm.ToString():
                     if (command.Length != (int)FileCommandsEnum.rm) 
@@ -63,9 +65,30 @@ namespace FS
             FSFile.ReadFile(containerPath: containerPath, filePath: path, newFileName: fileName, firstAvailbleAddress: firstAvailableAddress, maxFileTitleSize: maxFileTitleSize);
         }
 
-        public static void ls()
+        public static void ls(string containerPath, int fileTitleMaxSize, long firstAddress, long firstAvailableAddress)
         {
-            Console.WriteLine("ls");
+            using (FileStream stream = new FileStream(containerPath, FileMode.Open))
+            {
+                stream.Seek(firstAddress, SeekOrigin.Begin);
+                using (var reader = new BinaryReader(stream))
+                {
+                    while (stream.Position < firstAvailableAddress)
+                    {
+                        byte[] buffer = new byte[fileTitleMaxSize];
+                        int bytesRead = stream.Read(buffer, 0, fileTitleMaxSize);
+                        // Convert the bytes to a string
+                        string title = Encoding.UTF8.GetString(buffer, 0, bytesRead).TrimZeroes();
+
+                        long size = reader.ReadInt64();
+
+                        Console.WriteLine($"{title} {size}");
+
+                        stream.Seek(size, SeekOrigin.Current);
+
+                        if (stream.Position >= firstAvailableAddress) break;
+                    }
+                }
+            }
         }
 
         public static void rm()

@@ -22,15 +22,7 @@ namespace FileSystem
             {
                 metadata = FS.data.FileSystem.ReadData(path.AddFileName(), 0);
             }
-            // mocked data
-            //FSFile.FileMetadata metadataFile = new FSFile.FileMetadata("text.txt", "Hello, my name is Lenchezar. Are you 06, cause I like you?");
-            //long? address = FSFile.WriteData(metadataFile, path.AddFileName(), metadata.FirstAvailableAddress, metadata.MaxFileTitleSize);
-            //FSFile.ReadData(path.AddFileName(), metadata.FirstAvailableAddress);
-
-            //if (address != null)
-            //{
-            //    FileSystemData.FileSystem.ChnageFirstAvailableAddress(filePath: path.AddFileName(), newAddress: address ?? 0);
-            //}
+            
             FSFile.ReadData(path.AddFileName(), metadata.FirstAddress, metadata.MaxFileTitleSize);
             while (true)
             {
