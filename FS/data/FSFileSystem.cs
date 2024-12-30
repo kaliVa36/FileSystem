@@ -1,17 +1,16 @@
 ﻿using Constants;
-using FS;
 
 namespace FS.data
 {
     public class FileSystemMetadata
     {
         public int BlockSize { get; set; }
-        public int MaxFileSize { get; set; }
+        public long MaxFileSize { get; set; }
         public long FirstAddress { get; set; }
         public long FirstAvailableAddress { get; set; }
         public int MaxFileTitleSize { get; set; }
 
-        public FileSystemMetadata(int blockSize, int maxFileSize, long firstAddress, long firstAvailableAddress, int maxFileTitleSize)
+        public FileSystemMetadata(int blockSize, long maxFileSize, long firstAddress, long firstAvailableAddress, int maxFileTitleSize)
         {
             BlockSize = blockSize;
             MaxFileSize = maxFileSize;
@@ -21,7 +20,8 @@ namespace FS.data
         }
     }
 
-    internal class FileSystem : IFileOperations<FileSystemMetadata>
+    
+    internal class FSFileSystem : IFileOperations<FileSystemMetadata>
     {
         public static FileSystemMetadata InitializeFileSystem(string path)
         {
@@ -50,7 +50,7 @@ namespace FS.data
             // Writing metadata into the container
             FileSystemMetadata metadata = new FileSystemMetadata(
                     blockSize: int.Parse(chunkSize),
-                    maxFileSize: int.Parse(fileMaxSizeInput),
+                    maxFileSize: long.Parse(fileMaxSizeInput),
                     maxFileTitleSize: int.Parse(fileNameCharactersMaxSizeInput),
                     firstAddress: 0,
                     firstAvailableAddress: 0
@@ -115,15 +115,15 @@ namespace FS.data
                 using (var reader = new BinaryReader(stream))
                 {
                     int blockSize = BitConverter.ToInt32(reader.ReadBytes(sizeof(int)), 0);
-                    Console.WriteLine("blockSize: " + blockSize);
+                    // Console.WriteLine("blockSize: " + blockSize);
                     long firstAddress = BitConverter.ToInt64(reader.ReadBytes(sizeof(long)), 0);
-                    Console.WriteLine("firstAddress: " + firstAddress);
+                    // Console.WriteLine("firstAddress: " + firstAddress);
                     long firstAvailableAddress = BitConverter.ToInt64(reader.ReadBytes(sizeof(long)), 0);
-                    Console.WriteLine("firstAvailableAddress: " + firstAvailableAddress);
-                    int maxFileSize = BitConverter.ToInt32(reader.ReadBytes(sizeof(int)), 0);
-                    Console.WriteLine("MaxFileSize: " + maxFileSize);
-                    int maxFileTitle = BitConverter.ToInt32(reader.ReadBytes(sizeof(int)), 0);
-                    Console.WriteLine("maxFileTitle: " + maxFileTitleSize);
+                    // Console.WriteLine("firstAvailableAddress: " + firstAvailableAddress);
+                    long maxFileSize = reader.ReadInt64();
+                    // Console.WriteLine("MaxFileSize: " + maxFileSize);
+                    int maxFileTitle = reader.ReadInt32();
+                    // Console.WriteLine($"maxFileTitle: {maxFileTitle}");
 
                     return new FileSystemMetadata(
                         blockSize: blockSize,

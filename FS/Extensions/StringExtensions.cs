@@ -82,6 +82,20 @@ namespace FS.Extensions
             }
 
             return strings;
-        } 
+        }
+
+        public static string SplitLastChar(this string text, char symbol)
+        {
+            for (int i = text.Length - 1; i >= 0; i--)
+            {
+                if (text[i] == symbol)
+                {
+                    text = text.Remove(i);
+                    break;
+                }
+            }
+            Console.WriteLine(text);
+            return text;
+        }
     }
 }

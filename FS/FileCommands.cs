@@ -9,7 +9,6 @@ namespace FS
     {
         public static void callCommand(string[] command, FileSystemMetadata metadata, string containerPath)
         {
-            Console.WriteLine(command[0]);
             switch (command[0])
             {
                 case var cmd when cmd == FileCommandsEnum.cpin.ToString():
@@ -42,7 +41,7 @@ namespace FS
                         Console.WriteLine(ErrorConstants.InvalidCommand);
                         break;
                     }
-                    cpout();
+                    cpout(containerPath, command[2], command[1], metadata);
                     break;
                 default:
                     Console.WriteLine(ErrorConstants.InvalidCommand);
@@ -96,9 +95,43 @@ namespace FS
             Console.WriteLine("rm");
         }
 
-        public static void cpout()
+        public static void cpout(string containerPath, string filePath, string fileName, FileSystemMetadata metadata)
         {
-            Console.WriteLine("cpout");
+            if (!Directory.Exists(filePath.SplitLastChar('\\')))
+            {
+                Console.WriteLine(ErrorConstants.LocationNotExist);
+                return;
+            }
+
+            using (FileStream stream = new FileStream(containerPath, FileMode.Open))
+            {
+                stream.Seek(metadata.FirstAddress, SeekOrigin.Begin);
+                using (var reader = new BinaryReader(stream))
+                {
+                    while (stream.Position < metadata.FirstAvailableAddress)
+                    {
+                        byte[] buffer = new byte[metadata.MaxFileTitleSize];
+                        int bytesRead = stream.Read(buffer, 0, metadata.MaxFileTitleSize);
+                        // Convert the bytes to a string
+                        string title = Encoding.UTF8.GetString(buffer, 0, bytesRead).TrimZeroes();
+
+                        long size = reader.ReadInt64();
+
+                        if (fileName == title)
+                        {
+                            Console.WriteLine("1");
+                            long position = stream.Position;
+                            stream.Close();
+                            FSFile.WriteFileFromContainer(containerPath, filePath, position, size);
+                            break;
+                        }
+
+                        stream.Seek(size, SeekOrigin.Current);
+
+                        if (stream.Position >= metadata.FirstAvailableAddress) break;
+                    }
+                }
+            }
         }
     }
 }

@@ -11,7 +11,7 @@ namespace FS.Extensions
             {
                 if (!File.Exists(path + "/" + ConstantsValues.ContainerName))
                 {
-                    data.FileSystem.InitializeFileSystem(path);
+                    data.FSFileSystem.InitializeFileSystem(path);
                     Console.WriteLine("File system created");
                 }
                 else

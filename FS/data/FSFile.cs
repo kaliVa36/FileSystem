@@ -105,7 +105,40 @@ namespace FS.data
 
             if (lastStreamPosition != 0)
             {
-                FileSystem.ChangeFirstAvailableAddress(lastStreamPosition, containerPath);
+                FSFileSystem.ChangeFirstAvailableAddress(lastStreamPosition, containerPath);
+            }
+        }
+
+        public static void WriteFileFromContainer(string conteinerPath, string filePath, long address, long size)
+        {
+            int bufferSize = FileConstants.ReadFileBuffer; // Example buffer size
+
+            using (FileStream stream = new FileStream(conteinerPath, FileMode.Open, FileAccess.Read))
+            {
+                byte[] buffer = new byte[bufferSize];
+                long totalBytesWritten = 0;
+
+                using (FileStream file = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write))
+                {
+                    using (var writer = new StreamWriter(file))
+                    {
+                        stream.Seek(address, SeekOrigin.Begin);
+                        while (totalBytesWritten < size)
+                        {
+                            int remainingSize = (int)(size - totalBytesWritten);
+                            int bytesToRead = (remainingSize < bufferSize) ? remainingSize : bufferSize;
+
+                            int bytesRead = stream.Read(buffer, 0, bytesToRead);
+                            if (bytesRead == 0) break;
+
+                            string decodedData = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                            writer.Write(decodedData);
+                            writer.Flush();
+
+                            totalBytesWritten += bytesRead;
+                        }
+                    }
+                }
             }
         }
     }
