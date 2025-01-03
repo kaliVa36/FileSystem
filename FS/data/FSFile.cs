@@ -11,13 +11,16 @@ namespace FS.data
         {
             public string FileName { get; set; }
             public string ContentType { get; set; }
-            public string Content { get; set; }
+            public int Size { get; set; }
+            public int BlockAddressesSize { get; set; }
+            public List<long> BlockAddresses { get; set; }
+            public long NextMetadataAddress { get; set; } = -1;
 
-            public FileMetadata(string fileName, string content)
+            public FileMetadata(string fileName, int size)
             {
                 FileName = fileName;
                 // ContentType = contentType; // Will be added soon
-                Content = content;
+                Size = size;
             }
         }
 
@@ -28,11 +31,57 @@ namespace FS.data
                 stream.Seek(startAddress, SeekOrigin.Begin);
                 using (var writer = new BinaryWriter(stream, Encoding.UTF8, false))
                 {
-                    byte[] text = Encoding.Unicode.GetBytes(data.Content);
+                    byte[] text = Encoding.Unicode.GetBytes(data.Size);
                     writer.Write(data.FileName.PadZeroes(size));
                     writer.Write(BitConverter.GetBytes(text.Length));
                     writer.Write(text);
-                    return (stream.Position-startAddress);
+                    return (stream.Position - startAddress);
+                }
+            }
+        }
+
+        public static void WriteMetadata(string containerPath, long startAddress, FileMetadata metadata, int fileNameMaxSize)
+        {
+            using (var stream = new FileStream(containerPath, FileMode.Open, FileAccess.Write))
+            {
+                stream.Seek(startAddress, SeekOrigin.Begin);
+                using (var writer = new BinaryWriter(stream))
+                {
+                    string title = metadata.FileName.PadZeroes(fileNameMaxSize);
+                    writer.Write(Encoding.UTF8.GetBytes(title));
+                    writer.Write(BitConverter.GetBytes(metadata.Size));
+                    writer.Write(BitConverter.GetBytes(metadata.BlockAddressesSize));
+                    for (int i = 0; i < metadata.BlockAddressesSize - 1; i++)
+                    {
+                        writer.Write(BitConverter.GetBytes(metadata.BlockAddresses[i]));
+                    }
+                    stream.Write(BitConverter.GetBytes(metadata.NextMetadataAddress));
+                }
+            }
+        }
+
+        public static void ReadMetadata(string containerPath, long startAddress, int fileNameMaxSize)
+        {
+            using (var stream = new FileStream(containerPath, FileMode.Open, FileAccess.Read))
+            {
+                stream.Seek(startAddress, SeekOrigin.Begin);
+                using (var reader = new BinaryReader(stream))
+                {
+                    byte[] buffer = new byte[fileNameMaxSize];
+                    int bytesRead = reader.Read(buffer, 0, fileNameMaxSize);
+                    string title = Encoding.UTF8.GetString(buffer, 0, bytesRead).TrimZeroes();
+
+                    long size = reader.ReadInt64();
+
+                    long blockAddressesSize = reader.ReadInt64();
+
+                    List<long> blockAddresses = new List<long>();
+                    for (int i = 0; i < blockAddressesSize; i++)
+                    {
+                        blockAddresses.Add(reader.ReadInt64());
+                    }
+
+                    long nextAddress = reader.ReadInt64();
                 }
             }
         }

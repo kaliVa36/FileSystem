@@ -17,7 +17,7 @@ namespace FS
                         Console.WriteLine(ErrorConstants.InvalidCommand);
                         break;
                     }
-                    cpin(containerPath, command[1], command[2], metadata.MaxFileTitleSize, metadata.FirstAvailableAddress);
+                    cpin(containerPath, command[1], command[2], metadata.MaxFileTitleSize, metadata.FirstFileAddress);
                     break;
                 case var cmd when cmd == FileCommandsEnum.ls.ToString():
                     if (command.Length != (int)FileCommandsEnum.ls) 
@@ -25,7 +25,7 @@ namespace FS
                         Console.WriteLine(ErrorConstants.InvalidCommand);
                         break;
                     }
-                    ls(containerPath, metadata.MaxFileTitleSize, metadata.FirstAddress, metadata.FirstAvailableAddress);
+                    ls(containerPath, metadata.MaxFileTitleSize, metadata.FirstMetadataAddress, metadata.FirstFileAddress);
                     break;
                 case var cmd when cmd == FileCommandsEnum.rm.ToString():
                     if (command.Length != (int)FileCommandsEnum.rm) 
@@ -105,10 +105,10 @@ namespace FS
 
             using (FileStream stream = new FileStream(containerPath, FileMode.Open))
             {
-                stream.Seek(metadata.FirstAddress, SeekOrigin.Begin);
+                stream.Seek(metadata.FirstMetadataAddress, SeekOrigin.Begin);
                 using (var reader = new BinaryReader(stream))
                 {
-                    while (stream.Position < metadata.FirstAvailableAddress)
+                    while (stream.Position < metadata.FirstFileAddress)
                     {
                         byte[] buffer = new byte[metadata.MaxFileTitleSize];
                         int bytesRead = stream.Read(buffer, 0, metadata.MaxFileTitleSize);
@@ -127,7 +127,7 @@ namespace FS
 
                         stream.Seek(size, SeekOrigin.Current);
 
-                        if (stream.Position >= metadata.FirstAvailableAddress) break;
+                        if (stream.Position >= metadata.FirstFileAddress) break;
                     }
                 }
             }

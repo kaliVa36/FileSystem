@@ -17,6 +17,7 @@
     {
         public const int DefaultFileSystemFileMaxSize = 1073741824;
         public const int DefaultFileSystemFileNameCharacters = 20;
+        public const int DefaultMetadataStorage = 10240; // 10 KB
     }
 
     public static class FileConstants
