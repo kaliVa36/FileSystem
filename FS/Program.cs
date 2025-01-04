@@ -30,7 +30,7 @@ namespace FileSystem
                 bitmapMetadata.LoadBitmap(path.AddFileName(), MetadataConstants.DefaultFileSystemMetadataSize, FileConstants.ReadBitmapBuffer);
                 // bitmapMetadata.PrintBitmap(); // for testing
                 bitmapFile.LoadBitmap(path.AddFileName(), fsMetadata.FirstBitmapFileAddress, FileConstants.ReadBitmapBuffer);
-                Console.WriteLine("Bitmap of files");
+                // Console.WriteLine("Bitmap of files");
                 // bitmapFile.PrintBitmap();
             }
 

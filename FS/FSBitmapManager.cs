@@ -17,7 +17,7 @@ namespace FS
     internal class FSBitmapManager
     {
         private byte[] Bitmap;
-        private readonly int TotalBlocks;
+        public int TotalBlocks;
 
         public FSBitmapManager(int totalBlocks)
         { 
@@ -131,6 +131,14 @@ namespace FS
                 if ((Bitmap[byteIndex] & (1 << bitIndex)) == 0)  return i; // Return the index of the first free block
             }
             return -1; // No free blocks available
+        }
+
+        public bool IsBlockUsed(int blockIndex)
+        {
+            int byteIndex = blockIndex / 8; // 1 byte has 8 bits
+            int bitIndex = blockIndex % 8; // finds the bit which responds for this index
+
+            return (Bitmap[byteIndex] & (1 << bitIndex)) != 0; // Checks specific bit using AND 
         }
     }
 }

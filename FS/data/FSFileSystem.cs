@@ -132,25 +132,25 @@ namespace FS.data
                 using (var reader = new BinaryReader(stream))
                 {
                     // Print for testing
-                    Console.WriteLine("File System metadata:");
+                    //Console.WriteLine("File System metadata:");
                     long firstFileMetadataAddress = reader.ReadInt64();
-                    Console.WriteLine(firstFileMetadataAddress);
+                    //Console.WriteLine(firstFileMetadataAddress);
                     long firstBitmapMetadataAddress = reader.ReadInt64();
-                    Console.WriteLine(firstBitmapMetadataAddress);
+                    //Console.WriteLine(firstBitmapMetadataAddress);
                     int bitmapMetadataSize = reader.ReadInt32();
-                    Console.WriteLine(bitmapMetadataSize);
+                    //Console.WriteLine(bitmapMetadataSize);
                     long firstFileAddress = reader.ReadInt64();
-                    Console.WriteLine(firstFileAddress);
+                    //Console.WriteLine(firstFileAddress);
                     long firstBitmapFileAddress = reader.ReadInt64();
-                    Console.WriteLine(firstBitmapFileAddress);
+                    //Console.WriteLine(firstBitmapFileAddress);
                     int bitmapFileSize = reader.ReadInt32();
-                    Console.WriteLine(bitmapFileSize);
+                    //Console.WriteLine(bitmapFileSize);
                     long firstAvailableAddress = reader.ReadInt64();
-                    Console.WriteLine(firstAvailableAddress);
+                    //Console.WriteLine(firstAvailableAddress);
                     int blockSize = reader.ReadInt32();
-                    Console.WriteLine(blockSize);
+                    //Console.WriteLine(blockSize);
                     int maxFileTitleSizeRead = reader.ReadInt32();
-                    Console.WriteLine(maxFileTitleSizeRead);
+                    //Console.WriteLine(maxFileTitleSizeRead);
 
                     return new FileSystemMetadata(
                         firstFileMetadataAddress: firstFileMetadataAddress,

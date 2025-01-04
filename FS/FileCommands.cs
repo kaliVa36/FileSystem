@@ -2,6 +2,7 @@
 using FS.data;
 using FS.Extensions;
 using System.Text;
+using static FS.data.FSFile;
 
 namespace FS
 {
@@ -20,12 +21,12 @@ namespace FS
                     cpin(containerPath, command[1], command[2], metadata, fileBitmap, metadataBitmap);
                     break;
                 case var cmd when cmd == FileCommandsEnum.ls.ToString():
-                    if (command.Length != (int)FileCommandsEnum.ls) 
+                    if (command.Length != (int)FileCommandsEnum.ls)
                     {
                         Console.WriteLine(ErrorConstants.InvalidCommand);
                         break;
                     }
-                  //  ls(containerPath, metadata.MaxFileTitleSize, metadata.FirstMetadataAddress, metadata.FirstFileAddress);
+                    ls(containerPath, metadata.MaxFileTitleSize, metadata, metadataBitmap);
                     break;
                 case var cmd when cmd == FileCommandsEnum.rm.ToString():
                     if (command.Length != (int)FileCommandsEnum.rm) 
@@ -64,27 +65,22 @@ namespace FS
             FSFile.ReadFile(containerPath, path, fileName, fsMetadata, fileBitmap, metadataBitmap);
         }
 
-        public static void ls(string containerPath, int fileTitleMaxSize, long firstAddress, long firstAvailableAddress)
+        public static void ls(string containerPath, int fileTitleMaxSize, FileSystemMetadata fsMetadata, FSBitmapManager metadataBitmap)
         {
-            using (FileStream stream = new FileStream(containerPath, FileMode.Open))
+            using (FileStream stream = new FileStream(containerPath, FileMode.Open, FileAccess.Read))
             {
-                stream.Seek(firstAddress, SeekOrigin.Begin);
-                using (var reader = new BinaryReader(stream))
+
+                for (int i = 0; i < metadataBitmap.TotalBlocks; i++)
                 {
-                    while (stream.Position < firstAvailableAddress)
+                    if (metadataBitmap.IsBlockUsed(i))
                     {
-                        byte[] buffer = new byte[fileTitleMaxSize];
-                        int bytesRead = stream.Read(buffer, 0, fileTitleMaxSize);
-                        // Convert the bytes to a string
-                        string title = Encoding.UTF8.GetString(buffer, 0, bytesRead).TrimZeroes();
+                        FileMetadata? metadata = ReadData(
+                            containerPath,
+                            fsMetadata.FirstFileMetadataAddress + (i * MetadataConstants.DefaultMetadataBlock),
+                            fsMetadata.MaxFileTitleSize
+                        );
 
-                        long size = reader.ReadInt64();
-
-                        Console.WriteLine($"{title} {size}");
-
-                        stream.Seek(size, SeekOrigin.Current);
-
-                        if (stream.Position >= firstAvailableAddress) break;
+                        if (metadata != null) { Console.WriteLine(metadata.FileName + " " + metadata.Size); }
                     }
                 }
             }
