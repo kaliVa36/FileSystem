@@ -14,13 +14,14 @@ namespace FS.data
             public int Size { get; set; }
             public int BlockAddressesSize { get; set; }
             public List<long> BlockAddresses { get; set; }
-            public long NextMetadataAddress { get; set; } = -1;
 
-            public FileMetadata(string fileName, int size)
+            public FileMetadata(string fileName, int size, int blockAddressesSize, List<long> blockAddresses)
             {
                 FileName = fileName;
                 // ContentType = contentType; // Will be added soon
                 Size = size;
+                BlockAddresses = blockAddresses;
+                BlockAddressesSize = blockAddressesSize;
             }
         }
 
@@ -31,17 +32,22 @@ namespace FS.data
                 stream.Seek(startAddress, SeekOrigin.Begin);
                 using (var writer = new BinaryWriter(stream, Encoding.UTF8, false))
                 {
-                    byte[] text = Encoding.Unicode.GetBytes(data.Size);
+                    //byte[] text = Encoding.Unicode.GetBytes(data.Size);
                     writer.Write(data.FileName.PadZeroes(size));
-                    writer.Write(BitConverter.GetBytes(text.Length));
-                    writer.Write(text);
+                    //writer.Write(BitConverter.GetBytes(text.Length));
+                    //writer.Write(text);
                     return (stream.Position - startAddress);
                 }
             }
         }
 
-        public static void WriteMetadata(string containerPath, long startAddress, FileMetadata metadata, int fileNameMaxSize)
+        public static void WriteMetadata(string containerPath, long startMetadataAddress, FileMetadata metadata, int fileNameMaxSize, FSBitmapManager bitmap, int metadataBlockSize)
         {
+            int bitmapBlock = bitmap.FindFreeBlock();
+            if (bitmapBlock == -1) throw new Exception(ErrorConstants.MetadataNoFreeSpace);
+
+            long startAddress = startMetadataAddress + (bitmapBlock * metadataBlockSize); // calculating the start address of the current metadata by skipping to the index of the found block
+
             using (var stream = new FileStream(containerPath, FileMode.Open, FileAccess.Write))
             {
                 stream.Seek(startAddress, SeekOrigin.Begin);
@@ -51,109 +57,149 @@ namespace FS.data
                     writer.Write(Encoding.UTF8.GetBytes(title));
                     writer.Write(BitConverter.GetBytes(metadata.Size));
                     writer.Write(BitConverter.GetBytes(metadata.BlockAddressesSize));
-                    for (int i = 0; i < metadata.BlockAddressesSize - 1; i++)
+                    for (int i = 0; i < metadata.BlockAddressesSize; i++)
                     {
                         writer.Write(BitConverter.GetBytes(metadata.BlockAddresses[i]));
                     }
-                    stream.Write(BitConverter.GetBytes(metadata.NextMetadataAddress));
                 }
+
+                bitmap.MarkAsUsed(bitmapBlock);
             }
         }
-
-        public static void ReadMetadata(string containerPath, long startAddress, int fileNameMaxSize)
+        public static void ReadMetadata(string containerPath, long startMetadataAddress, string fileName, int metadataBlockSize, int maxFileTitleSize)
         {
+            int blockIndex = FindMetadataBlockIndex(containerPath, startMetadataAddress, metadataBlockSize, fileName, maxFileTitleSize);
+
+            long blockAddress = startMetadataAddress + (blockIndex * metadataBlockSize);
+
             using (var stream = new FileStream(containerPath, FileMode.Open, FileAccess.Read))
             {
-                stream.Seek(startAddress, SeekOrigin.Begin);
+                stream.Seek(blockAddress, SeekOrigin.Begin);
                 using (var reader = new BinaryReader(stream))
                 {
-                    byte[] buffer = new byte[fileNameMaxSize];
-                    int bytesRead = reader.Read(buffer, 0, fileNameMaxSize);
-                    string title = Encoding.UTF8.GetString(buffer, 0, bytesRead).TrimZeroes();
+                    Console.WriteLine("FileMetadata: "); // for testing
 
-                    long size = reader.ReadInt64();
+                    byte[] buffer = new byte[maxFileTitleSize];
 
-                    long blockAddressesSize = reader.ReadInt64();
+                    int bytesRead = reader.Read(buffer, 0, maxFileTitleSize);
+                    string title = Encoding.UTF8.GetString(buffer).TrimZeroes();
+                    Console.WriteLine(title);
+                    int size = reader.ReadInt32();
+                    Console.WriteLine(size);
+                    int blockAddressesSize = reader.ReadInt32();
+                    Console.WriteLine(blockAddressesSize);
 
                     List<long> blockAddresses = new List<long>();
                     for (int i = 0; i < blockAddressesSize; i++)
                     {
-                        blockAddresses.Add(reader.ReadInt64());
+                        long address = reader.ReadInt64(); 
+                        blockAddresses.Add(address);
+                        Console.WriteLine(address);
                     }
-
-                    long nextAddress = reader.ReadInt64();
                 }
             }
         }
 
-        public static FileMetadata? ReadData(string filePath, long startAddress, int maxFileTitleSize)
+
+        public static void ReadFile(string containerPath, string filePath, string newFileName, FileSystemMetadata fsMetadata, FSBitmapManager fileBitmap, FSBitmapManager metadataBitmap)
         {
-            using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+            List<long> address = new List<long>();
+            int fileSize = 0;
+
+            using (var file = new FileStream(filePath, FileMode.Open, FileAccess.Read))
             {
-                stream.Seek(startAddress, SeekOrigin.Current);
-                using (var reader = new BinaryReader(stream))
-                {
-                    byte[] buffer = new byte[maxFileTitleSize];
-                    int bytesRead = stream.Read(buffer, 0, maxFileTitleSize);
-                    // Convert the bytes to a string
-                    string title = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                    Console.WriteLine(title.TrimZeroes());
-
-                    long size = BitConverter.ToInt64(reader.ReadBytes(sizeof(long)), 0);
-                    Console.WriteLine(size);
-
-                    byte[] content = reader.ReadBytes((int)size);
-                    Console.WriteLine(Encoding.UTF8.GetString(content));
-                }
-                return null;
-            }
-        }
-
-        public static void ReadFile(string containerPath, string filePath, long firstAvailbleAddress, int maxFileTitleSize, string newFileName)
-        {
-            int bufferSize = FileConstants.ReadFileBuffer; // Example buffer size
-            long lastStreamPosition = 0;
-            long updatedSizePosition = 0;
-            int sizeOfFile = 0;
-            using (FileStream file = new FileStream(filePath, FileMode.Open))
-            {
-                byte[] buffer = new byte[bufferSize];
+                byte[] buffer = new byte[fsMetadata.BlockSize];
                 int bytesRead;
 
-                using (FileStream stream = new FileStream(containerPath, FileMode.Append, FileAccess.Write))
+                using (var stream = new FileStream(containerPath, FileMode.Open, FileAccess.Write))
                 {
-                    using (var writer = new BinaryWriter(stream))
+                    while ((bytesRead = file.Read(buffer, 0, buffer.Length)) > 0)
                     {
-                        stream.Seek(firstAvailbleAddress, SeekOrigin.Begin);
-                        byte[] title = Encoding.UTF8.GetBytes(newFileName.PadZeroes(maxFileTitleSize));
-                        stream.Write(title);
-                        updatedSizePosition = stream.Position;
-                        stream.Write(BitConverter.GetBytes(0L)); // will change later
-                        while ((bytesRead = file.Read(buffer, 0, buffer.Length)) > 0)
-                        {
-                            writer.Write(buffer, 0, bytesRead);
-                            sizeOfFile += bytesRead;
-                        }
-                        lastStreamPosition = stream.Position;
+                        int block = fileBitmap.FindFreeBlock();
+                        if (block == -1) throw new Exception(ErrorConstants.MetadataNoFreeSpace);
+
+                        long blockAddress = fsMetadata.FirstFileAddress + (block * fsMetadata.BlockSize);
+
+                        stream.Seek(blockAddress, SeekOrigin.Begin);
+                        stream.Write(buffer, 0, bytesRead);
+
+                        address.Add(block);
+
+                        fileSize += bytesRead;
                     }
                 }
             }
 
-            using (FileStream stream = new FileStream(containerPath, FileMode.Open))
+            FileMetadata metadata = new FileMetadata(newFileName, fileSize, address.Count, address);
+            WriteMetadata(containerPath, fsMetadata.FirstFileMetadataAddress, metadata, fsMetadata.MaxFileTitleSize, metadataBitmap, MetadataConstants.DefaultMetadataBlock);
+        }
+
+        //    int bufferSize = FileConstants.ReadFileBuffer; // Example buffer size
+        //    long lastStreamPosition = 0;
+        //    long updatedSizePosition = 0;
+        //    int sizeOfFile = 0;
+        //    using (FileStream file = new FileStream(filePath, FileMode.Open))
+        //    {
+        //        byte[] buffer = new byte[bufferSize];
+        //        int bytesRead;
+
+        //        using (FileStream stream = new FileStream(containerPath, FileMode.Append, FileAccess.Write))
+        //        {
+        //            using (var writer = new BinaryWriter(stream))
+        //            {
+        //                stream.Seek(firstAvailbleAddress, SeekOrigin.Begin);
+        //                byte[] title = Encoding.UTF8.GetBytes(newFileName.PadZeroes(maxFileTitleSize));
+        //                stream.Write(title);
+        //                updatedSizePosition = stream.Position;
+        //                stream.Write(BitConverter.GetBytes(0L)); // will change later
+        //                while ((bytesRead = file.Read(buffer, 0, buffer.Length)) > 0)
+        //                {
+        //                    writer.Write(buffer, 0, bytesRead);
+        //                    sizeOfFile += bytesRead;
+        //                }
+        //                lastStreamPosition = stream.Position;
+        //            }
+        //        }
+        //    }
+
+        //    using (FileStream stream = new FileStream(containerPath, FileMode.Open))
+        //    {
+        //        if (updatedSizePosition != 0 && sizeOfFile != 0)
+        //        {
+        //            stream.Seek(updatedSizePosition, SeekOrigin.Begin);
+        //            using (var writer = new BinaryWriter(stream))
+        //            {
+        //                writer.Write(BitConverter.GetBytes(sizeOfFile));
+        //            }
+        //        }
+        //    }
+
+        //    if (lastStreamPosition != 0)
+        //    {
+        //        FSFileSystem.ChangeFirstAvailableAddress(lastStreamPosition, containerPath);
+        //    }
+        //}
+
+        public static int FindMetadataBlockIndex(string containerPath, long metadataStartAddress, int metadataBlockSize, string fileName, int maxFileTitleSize)
+        {
+            using (var stream = new FileStream(containerPath, FileMode.Open, FileAccess.Read))
             {
-                if (updatedSizePosition != 0 && sizeOfFile != 0)
+                using (var reader = new BinaryReader(stream))
                 {
-                    stream.Seek(updatedSizePosition, SeekOrigin.Begin);
-                    using (var writer = new BinaryWriter(stream))
-                    {
-                        writer.Write(BitConverter.GetBytes(sizeOfFile));
+                    for (int i = 0; ; i++) // i - block index
+                    { 
+                        long block = metadataStartAddress + (i * metadataBlockSize);
+                        
+                        stream.Seek(metadataStartAddress, SeekOrigin.Begin);
+
+                        byte[] buffer = new byte[maxFileTitleSize];
+
+                        int bytesRead = reader.Read(buffer, 0, maxFileTitleSize);
+                        string title = Encoding.UTF8.GetString(buffer).TrimZeroes();
+
+                        if (title == fileName) return i;
                     }
                 }
-            }
-
-            if (lastStreamPosition != 0)
-            {
-                FSFileSystem.ChangeFirstAvailableAddress(lastStreamPosition, containerPath);
             }
         }
 
@@ -188,6 +234,11 @@ namespace FS.data
                     }
                 }
             }
+        }
+
+        public static FileMetadata? ReadData(string filePath, long startAddress, int maxFileTitleSize)
+        {
+            throw new NotImplementedException();
         }
     }
 }

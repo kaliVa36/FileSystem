@@ -5,9 +5,9 @@ using System.Text;
 
 namespace FS
 {
-    public class FileCommands
+    internal class FileCommands
     {
-        public static void callCommand(string[] command, FileSystemMetadata metadata, string containerPath)
+        public static void callCommand(string[] command, FileSystemMetadata metadata, string containerPath, FSBitmapManager fileBitmap, FSBitmapManager metadataBitmap)
         {
             switch (command[0])
             {
@@ -17,7 +17,7 @@ namespace FS
                         Console.WriteLine(ErrorConstants.InvalidCommand);
                         break;
                     }
-                    cpin(containerPath, command[1], command[2], metadata.MaxFileTitleSize, metadata.FirstFileAddress);
+                    cpin(containerPath, command[1], command[2], metadata, fileBitmap, metadataBitmap);
                     break;
                 case var cmd when cmd == FileCommandsEnum.ls.ToString():
                     if (command.Length != (int)FileCommandsEnum.ls) 
@@ -25,7 +25,7 @@ namespace FS
                         Console.WriteLine(ErrorConstants.InvalidCommand);
                         break;
                     }
-                    ls(containerPath, metadata.MaxFileTitleSize, metadata.FirstMetadataAddress, metadata.FirstFileAddress);
+                  //  ls(containerPath, metadata.MaxFileTitleSize, metadata.FirstMetadataAddress, metadata.FirstFileAddress);
                     break;
                 case var cmd when cmd == FileCommandsEnum.rm.ToString():
                     if (command.Length != (int)FileCommandsEnum.rm) 
@@ -49,19 +49,19 @@ namespace FS
             }
         }
 
-        public static void cpin(string containerPath, string path, string fileName, int maxFileTitleSize, long firstAvailableAddress)
+        public static void cpin(string containerPath, string path, string fileName, FileSystemMetadata fsMetadata, FSBitmapManager fileBitmap, FSBitmapManager metadataBitmap)
         {
             if (!File.Exists(path))
             { 
                 Console.WriteLine(ErrorConstants.LocationNotExist);
                 return;
             }
-            if (fileName.Length > maxFileTitleSize)
+            if (fileName.Length > fsMetadata.MaxFileTitleSize)
             {
-                Console.WriteLine(ErrorConstants.TitleTooLong + maxFileTitleSize);
+                Console.WriteLine(ErrorConstants.TitleTooLong + fsMetadata.MaxFileTitleSize);
                 return;
             }
-            FSFile.ReadFile(containerPath: containerPath, filePath: path, newFileName: fileName, firstAvailbleAddress: firstAvailableAddress, maxFileTitleSize: maxFileTitleSize);
+            FSFile.ReadFile(containerPath, path, fileName, fsMetadata, fileBitmap, metadataBitmap);
         }
 
         public static void ls(string containerPath, int fileTitleMaxSize, long firstAddress, long firstAvailableAddress)
@@ -105,7 +105,7 @@ namespace FS
 
             using (FileStream stream = new FileStream(containerPath, FileMode.Open))
             {
-                stream.Seek(metadata.FirstMetadataAddress, SeekOrigin.Begin);
+               // stream.Seek(metadata.FirstMetadataAddress, SeekOrigin.Begin);
                 using (var reader = new BinaryReader(stream))
                 {
                     while (stream.Position < metadata.FirstFileAddress)

@@ -67,12 +67,12 @@ namespace FS.data
             FileSystemMetadata metadata = new FileSystemMetadata(
                     firstFileMetadataAddress: MetadataConstants.DefaultFileSystemMetadataSize + MetadataConstants.DefaultBitmapMetadataSize,
                     firstBitmapMetadataAddress: MetadataConstants.DefaultFileSystemMetadataSize,
-                    bitmapMetadataSize: MetadataConstants.DefaultFileSystemMetadataSize,
+                    bitmapMetadataSize: MetadataConstants.DefaultBitmapMetadataSize,
                     firstFileAddress: MetadataConstants.DefaultFileSystemMetadataSize + MetadataConstants.DefaultBitmapMetadataSize + MetadataConstants.DefaultMetadataStorage + MetadataConstants.DefaultBitmapFileSize,
                     firstBitmapFileAddress: MetadataConstants.DefaultFileSystemMetadataSize + MetadataConstants.DefaultBitmapMetadataSize + MetadataConstants.DefaultMetadataStorage,
-                    bitmapFileSize: MetadataConstants.DefaultFileSystemMetadataSize + MetadataConstants.DefaultBitmapMetadataSize + MetadataConstants.DefaultMetadataStorage,
+                    bitmapFileSize: MetadataConstants.DefaultBitmapFileSize,
                     blockSize: int.Parse(chunkSize),
-                    firstAvailableAddress: MetadataConstants.DefaultMetadataStorage, // this wont be working
+                    firstAvailableAddress: MetadataConstants.DefaultFileSystemMetadataSize + MetadataConstants.DefaultBitmapMetadataSize + MetadataConstants.DefaultMetadataStorage + MetadataConstants.DefaultBitmapFileSize,
                     maxFileTitleSize: int.Parse(fileNameCharactersMaxSizeInput)
             );
             WriteData(metadata, path, 0);
@@ -109,17 +109,15 @@ namespace FS.data
                 stream.Seek(startAddress, SeekOrigin.Begin);
                 using (var writer = new BinaryWriter(stream))
                 {
-                    writer.Write(BitConverter.GetBytes(data.BlockSize));
-                    writer.Write(BitConverter.GetBytes(data.FirstMetadataAddress));
+                    writer.Write(BitConverter.GetBytes(data.FirstFileMetadataAddress));
+                    writer.Write(BitConverter.GetBytes(data.FirstBitmapMetadataAddress));
+                    writer.Write(BitConverter.GetBytes(data.BitmapMetadataSize));
                     writer.Write(BitConverter.GetBytes(data.FirstFileAddress));
-                    writer.Write(BitConverter.GetBytes(data.MaxFileSize));
+                    writer.Write(BitConverter.GetBytes(data.FirstBitmapFileAddress));
+                    writer.Write(BitConverter.GetBytes(data.BitmapFileSize));
+                    writer.Write(BitConverter.GetBytes(data.FirstAvaialbleAddress));
+                    writer.Write(BitConverter.GetBytes(data.BlockSize));
                     writer.Write(BitConverter.GetBytes(data.MaxFileTitleSize));
-
-                    // Getting the file system's metadata size
-                    long sizeOfMetadata = stream.Position;
-                    // Skipping block size to write the new size into first address
-                    writer.Seek(sizeof(int), SeekOrigin.Begin);
-                    writer.Write(BitConverter.GetBytes(sizeOfMetadata));
 
                     return null;
                 }
@@ -133,23 +131,37 @@ namespace FS.data
                 stream.Seek(startAddress, SeekOrigin.Begin);
                 using (var reader = new BinaryReader(stream))
                 {
-                    int blockSize = BitConverter.ToInt32(reader.ReadBytes(sizeof(int)), 0);
-                    // Console.WriteLine("blockSize: " + blockSize);
-                    long firstAddress = BitConverter.ToInt64(reader.ReadBytes(sizeof(long)), 0);
-                    // Console.WriteLine("firstAddress: " + firstAddress);
-                    long firstAvailableAddress = BitConverter.ToInt64(reader.ReadBytes(sizeof(long)), 0);
-                    // Console.WriteLine("firstAvailableAddress: " + firstAvailableAddress);
-                    long maxFileSize = reader.ReadInt64();
-                    // Console.WriteLine("MaxFileSize: " + maxFileSize);
-                    int maxFileTitle = reader.ReadInt32();
-                    // Console.WriteLine($"maxFileTitle: {maxFileTitle}");
+                    // Print for testing
+                    Console.WriteLine("File System metadata:");
+                    long firstFileMetadataAddress = reader.ReadInt64();
+                    Console.WriteLine(firstFileMetadataAddress);
+                    long firstBitmapMetadataAddress = reader.ReadInt64();
+                    Console.WriteLine(firstBitmapMetadataAddress);
+                    int bitmapMetadataSize = reader.ReadInt32();
+                    Console.WriteLine(bitmapMetadataSize);
+                    long firstFileAddress = reader.ReadInt64();
+                    Console.WriteLine(firstFileAddress);
+                    long firstBitmapFileAddress = reader.ReadInt64();
+                    Console.WriteLine(firstBitmapFileAddress);
+                    int bitmapFileSize = reader.ReadInt32();
+                    Console.WriteLine(bitmapFileSize);
+                    long firstAvailableAddress = reader.ReadInt64();
+                    Console.WriteLine(firstAvailableAddress);
+                    int blockSize = reader.ReadInt32();
+                    Console.WriteLine(blockSize);
+                    int maxFileTitleSizeRead = reader.ReadInt32();
+                    Console.WriteLine(maxFileTitleSizeRead);
 
                     return new FileSystemMetadata(
-                        blockSize: blockSize,
-                        firstAddress: firstAddress,
+                        firstFileMetadataAddress: firstFileMetadataAddress,
+                        firstBitmapMetadataAddress: firstBitmapMetadataAddress,
+                        bitmapMetadataSize: bitmapMetadataSize,
+                        firstFileAddress: firstFileAddress,
+                        firstBitmapFileAddress: firstBitmapFileAddress,
+                        bitmapFileSize: bitmapFileSize,
                         firstAvailableAddress: firstAvailableAddress,
-                        maxFileSize: maxFileSize,
-                        maxFileTitleSize: maxFileTitle
+                        blockSize: blockSize,
+                        maxFileTitleSize: maxFileTitleSizeRead
                     );
                 }
             }
