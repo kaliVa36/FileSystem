@@ -12,11 +12,10 @@ namespace FS.data
         public long FirstFileAddress { get; set; }
         public long FirstBitmapFileAddress { get; set; }
         public int BitmapFileSize { get; set; }
-        public long FirstAvaialbleAddress { get; set; }
         public int BlockSize { get; set; }
         public int MaxFileTitleSize { get; set; }
 
-        public FileSystemMetadata(long firstFileMetadataAddress, long firstBitmapMetadataAddress,int bitmapMetadataSize, long firstFileAddress, long firstBitmapFileAddress, int bitmapFileSize, int blockSize, long firstAvailableAddress, int maxFileTitleSize)
+        public FileSystemMetadata(long firstFileMetadataAddress, long firstBitmapMetadataAddress,int bitmapMetadataSize, long firstFileAddress, long firstBitmapFileAddress, int bitmapFileSize, int blockSize, int maxFileTitleSize)
         {
             FirstFileMetadataAddress = firstFileMetadataAddress;
             FirstBitmapMetadataAddress = firstBitmapMetadataAddress;
@@ -24,7 +23,6 @@ namespace FS.data
             FirstFileAddress = firstFileAddress;
             FirstBitmapFileAddress = firstBitmapFileAddress;
             BitmapFileSize = bitmapFileSize;
-            FirstAvaialbleAddress = firstAvailableAddress;
             BlockSize = blockSize;
             MaxFileTitleSize = maxFileTitleSize;
         }
@@ -72,7 +70,6 @@ namespace FS.data
                     firstBitmapFileAddress: MetadataConstants.DefaultFileSystemMetadataSize + MetadataConstants.DefaultBitmapMetadataSize + MetadataConstants.DefaultMetadataStorage,
                     bitmapFileSize: MetadataConstants.DefaultBitmapFileSize,
                     blockSize: int.Parse(chunkSize),
-                    firstAvailableAddress: MetadataConstants.DefaultFileSystemMetadataSize + MetadataConstants.DefaultBitmapMetadataSize + MetadataConstants.DefaultMetadataStorage + MetadataConstants.DefaultBitmapFileSize,
                     maxFileTitleSize: int.Parse(fileNameCharactersMaxSizeInput)
             );
             WriteData(metadata, path, 0);
@@ -115,7 +112,6 @@ namespace FS.data
                     writer.Write(BitConverter.GetBytes(data.FirstFileAddress));
                     writer.Write(BitConverter.GetBytes(data.FirstBitmapFileAddress));
                     writer.Write(BitConverter.GetBytes(data.BitmapFileSize));
-                    writer.Write(BitConverter.GetBytes(data.FirstAvaialbleAddress));
                     writer.Write(BitConverter.GetBytes(data.BlockSize));
                     writer.Write(BitConverter.GetBytes(data.MaxFileTitleSize));
 
@@ -145,8 +141,6 @@ namespace FS.data
                     //Console.WriteLine(firstBitmapFileAddress);
                     int bitmapFileSize = reader.ReadInt32();
                     //Console.WriteLine(bitmapFileSize);
-                    long firstAvailableAddress = reader.ReadInt64();
-                    //Console.WriteLine(firstAvailableAddress);
                     int blockSize = reader.ReadInt32();
                     //Console.WriteLine(blockSize);
                     int maxFileTitleSizeRead = reader.ReadInt32();
@@ -159,21 +153,9 @@ namespace FS.data
                         firstFileAddress: firstFileAddress,
                         firstBitmapFileAddress: firstBitmapFileAddress,
                         bitmapFileSize: bitmapFileSize,
-                        firstAvailableAddress: firstAvailableAddress,
                         blockSize: blockSize,
                         maxFileTitleSize: maxFileTitleSizeRead
                     );
-                }
-            }
-        }
-        public static void ChangeFirstAvailableAddress(long newAddress, string filePath)
-        {
-            using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Write))
-            {
-                using (var writer = new BinaryWriter(stream))
-                {
-                    writer.Seek(sizeof(int) + sizeof(long), SeekOrigin.Begin);
-                    writer.Write(BitConverter.GetBytes(newAddress));
                 }
             }
         }

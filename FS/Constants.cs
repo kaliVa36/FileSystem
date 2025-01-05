@@ -23,7 +23,7 @@
         public const int DefaultBitmapFileSize = 32768; // 32 KB
         public const int DefaultMetadataBlock = 256;
         public const int DefaultBitmapMetadataSize = 40;
-        public const int DefaultFileSystemMetadataSize = 56;
+        public const int DefaultFileSystemMetadataSize = 48;
         public const int DefaultMaxFileBlocksSize = 262139; // harcoded for now - if the block size is 4096
     }
 

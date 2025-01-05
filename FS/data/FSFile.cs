@@ -137,52 +137,6 @@ namespace FS.data
             WriteMetadata(containerPath, fsMetadata.FirstFileMetadataAddress, fsMetadata.FirstBitmapMetadataAddress, metadata, fsMetadata.MaxFileTitleSize, metadataBitmap, MetadataConstants.DefaultMetadataBlock);
         }
 
-        //    int bufferSize = FileConstants.ReadFileBuffer; // Example buffer size
-        //    long lastStreamPosition = 0;
-        //    long updatedSizePosition = 0;
-        //    int sizeOfFile = 0;
-        //    using (FileStream file = new FileStream(filePath, FileMode.Open))
-        //    {
-        //        byte[] buffer = new byte[bufferSize];
-        //        int bytesRead;
-
-        //        using (FileStream stream = new FileStream(containerPath, FileMode.Append, FileAccess.Write))
-        //        {
-        //            using (var writer = new BinaryWriter(stream))
-        //            {
-        //                stream.Seek(firstAvailbleAddress, SeekOrigin.Begin);
-        //                byte[] title = Encoding.UTF8.GetBytes(newFileName.PadZeroes(maxFileTitleSize));
-        //                stream.Write(title);
-        //                updatedSizePosition = stream.Position;
-        //                stream.Write(BitConverter.GetBytes(0L)); // will change later
-        //                while ((bytesRead = file.Read(buffer, 0, buffer.Length)) > 0)
-        //                {
-        //                    writer.Write(buffer, 0, bytesRead);
-        //                    sizeOfFile += bytesRead;
-        //                }
-        //                lastStreamPosition = stream.Position;
-        //            }
-        //        }
-        //    }
-
-        //    using (FileStream stream = new FileStream(containerPath, FileMode.Open))
-        //    {
-        //        if (updatedSizePosition != 0 && sizeOfFile != 0)
-        //        {
-        //            stream.Seek(updatedSizePosition, SeekOrigin.Begin);
-        //            using (var writer = new BinaryWriter(stream))
-        //            {
-        //                writer.Write(BitConverter.GetBytes(sizeOfFile));
-        //            }
-        //        }
-        //    }
-
-        //    if (lastStreamPosition != 0)
-        //    {
-        //        FSFileSystem.ChangeFirstAvailableAddress(lastStreamPosition, containerPath);
-        //    }
-        //}
-
         public static int FindMetadataBlockIndex(string containerPath, long metadataStartAddress, int metadataBlockSize, string fileName, int maxFileTitleSize)
         {
             using (var stream = new FileStream(containerPath, FileMode.Open, FileAccess.Read))
@@ -201,39 +155,6 @@ namespace FS.data
                         string title = Encoding.UTF8.GetString(buffer).TrimZeroes();
 
                         if (title == fileName) return i;
-                    }
-                }
-            }
-        }
-
-        public static void WriteFileFromContainer(string conteinerPath, string filePath, long address, long size)
-        {
-            int bufferSize = FileConstants.ReadFileBuffer;
-
-            using (FileStream stream = new FileStream(conteinerPath, FileMode.Open, FileAccess.Read))
-            {
-                byte[] buffer = new byte[bufferSize];
-                long totalBytesWritten = 0;
-
-                using (FileStream file = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write))
-                {
-                    using (var writer = new StreamWriter(file))
-                    {
-                        stream.Seek(address, SeekOrigin.Begin);
-                        while (totalBytesWritten < size)
-                        {
-                            int remainingSize = (int)(size - totalBytesWritten);
-                            int bytesToRead = (remainingSize < bufferSize) ? remainingSize : bufferSize;
-
-                            int bytesRead = stream.Read(buffer, 0, bytesToRead);
-                            if (bytesRead == 0) break;
-
-                            string decodedData = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                            writer.Write(decodedData);
-                            writer.Flush();
-
-                            totalBytesWritten += bytesRead;
-                        }
                     }
                 }
             }
