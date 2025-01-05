@@ -1,7 +1,8 @@
 ﻿// See https://aka.ms/new-console-template for more information
-using FS;
-using FileSystemData;
 using FS.Extensions;
+using FS.data;
+using FS;
+using Constants;
 
 namespace FileSystem
 {
@@ -12,20 +13,36 @@ namespace FileSystem
             // Reading the container's location
             Console.WriteLine("Enter location for storing the container:");
             string? path = Console.ReadLine();
-            FileSystemMetadata metadata = new FileSystemMetadata(0, 0, 0, 0, 0);
+            FileSystemMetadata fsMetadata;
+            FSBitmapManager bitmapMetadata = new FSBitmapManager(MetadataConstants.DefaultBitmapMetadataSize);
+            FSBitmapManager bitmapFile = new FSBitmapManager(MetadataConstants.DefaultBitmapFileSize);
             if (path == null) throw new ArgumentNullException(nameof(path));
             if (!File.Exists(path.AddFileName()))
             {
-                metadata = FileSystemData.FileSystem.InitializeFileSystem(path);
+                fsMetadata = FSFileSystem.InitializeFileSystem(path.AddFileName());
+
+                bitmapMetadata.InitializeBitmap(path.AddFileName(), MetadataConstants.DefaultFileSystemMetadataSize, FileConstants.ReadBitmapBuffer);
+                bitmapFile.InitializeBitmap(path.AddFileName(), fsMetadata.FirstBitmapFileAddress, FileConstants.ReadFileBuffer);
             }
             else
             {
-                metadata = FileSystemData.FileSystem.ReadData(path.AddFileName(), 0);
+                fsMetadata = FSFileSystem.ReadData(path.AddFileName(), 0);
+                bitmapMetadata.LoadBitmap(path.AddFileName(), MetadataConstants.DefaultFileSystemMetadataSize, FileConstants.ReadBitmapBuffer);
+                bitmapMetadata.PrintBitmap(); // for testing
+                bitmapFile.LoadBitmap(path.AddFileName(), fsMetadata.FirstBitmapFileAddress, FileConstants.ReadBitmapBuffer);
+                //Console.WriteLine("Bitmap of files");
+                //bitmapFile.PrintBitmap();
             }
-            FSFile.FileMetadata metadataFile = new FSFile.FileMetadata("text.txt", "Hello, my name is Lenchezar. Are you 06, cause I like you?");
 
-            FSFile.WriteData(metadataFile, path.AddFileName(), metadata.FirstAvailableAddress, metadata.MaxFileTitleSize);
-            FSFile.ReadData(path.AddFileName(), metadata.FirstAvailableAddress);
+            while (true)
+            {
+                Console.WriteLine("Enter command: ");
+                string? command = Console.ReadLine();
+                if (command != null)
+                {
+                    FileCommands.callCommand(command.SplitByChar(' '), fsMetadata, path.AddFileName(), bitmapFile, bitmapMetadata);
+                }
+            }
         }
     }
 }
