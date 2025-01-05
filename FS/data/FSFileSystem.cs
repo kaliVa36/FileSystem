@@ -14,7 +14,8 @@ namespace FS.data
         public int BitmapFileSize { get; set; }
         public int BlockSize { get; set; }
         public int MaxFileTitleSize { get; set; }
-
+        // Directory
+        public long ParentAddress { get; set; }
         public FileSystemMetadata(long firstFileMetadataAddress, long firstBitmapMetadataAddress,int bitmapMetadataSize, long firstFileAddress, long firstBitmapFileAddress, int bitmapFileSize, int blockSize, int maxFileTitleSize)
         {
             FirstFileMetadataAddress = firstFileMetadataAddress;
@@ -72,7 +73,9 @@ namespace FS.data
                     blockSize: int.Parse(chunkSize),
                     maxFileTitleSize: int.Parse(fileNameCharactersMaxSizeInput)
             );
+
             WriteData(metadata, path, 0);
+
             return ReadData(path, 0);
         }
 

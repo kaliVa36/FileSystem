@@ -91,7 +91,7 @@ namespace FS
                 }
             }
 
-            PrintBitmap();
+            //PrintBitmap();
         }
 
         public void InitializeBitmap(string containerPath, long startAddress, int blockSize)

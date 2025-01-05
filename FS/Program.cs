@@ -3,6 +3,7 @@ using FS.Extensions;
 using FS.data;
 using FS;
 using Constants;
+using static FS.data.FSFile;
 
 namespace FileSystem
 {
@@ -28,12 +29,21 @@ namespace FileSystem
             {
                 fsMetadata = FSFileSystem.ReadData(path.AddFileName(), 0);
                 bitmapMetadata.LoadBitmap(path.AddFileName(), MetadataConstants.DefaultFileSystemMetadataSize, FileConstants.ReadBitmapBuffer);
-                bitmapMetadata.PrintBitmap(); // for testing
+                //bitmapMetadata.PrintBitmap(); // for testing
                 bitmapFile.LoadBitmap(path.AddFileName(), fsMetadata.FirstBitmapFileAddress, FileConstants.ReadBitmapBuffer);
                 //Console.WriteLine("Bitmap of files");
                 //bitmapFile.PrintBitmap();
             }
 
+            FileMetadata metadata = new FileMetadata(
+                "example.txt",
+                1048576, // 1 MB file size
+                300, // Number of blocks
+                Enumerable.Range(0, 300).ToList(), // Simulated block indexes
+                -1 // Default next address
+            );
+            WriteMetadataBlocks(path.AddFileName(), fsMetadata.FirstFileMetadataAddress, fsMetadata.FirstBitmapMetadataAddress, metadata, fsMetadata.MaxFileTitleSize, bitmapMetadata, 256);
+            ReadMetadataBlocks(path.AddFileName(), fsMetadata.FirstFileMetadataAddress, "example.txt", 256, fsMetadata.MaxFileTitleSize);
             while (true)
             {
                 Console.WriteLine("Enter command: ");
