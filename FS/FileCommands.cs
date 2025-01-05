@@ -43,7 +43,7 @@ namespace FS
                         Console.WriteLine(ErrorConstants.InvalidCommand);
                         break;
                     }
-                    cpout(containerPath, command[2], command[1], metadata);
+                    cpout(containerPath, command[2], command[1], metadata, fileBitmap, metadataBitmap);
                     break;
                 default:
                     Console.WriteLine(ErrorConstants.InvalidCommand);
@@ -121,7 +121,7 @@ namespace FS
             if (!flag) Console.WriteLine(ErrorConstants.FileNotFound);
         }
 
-        public static void cpout(string containerPath, string filePath, string fileName, FileSystemMetadata metadata)
+        public static void cpout(string containerPath, string filePath, string fileName, FileSystemMetadata fsMetadata, FSBitmapManager fileBitmap, FSBitmapManager metadataBitmap)
         {
             if (!Directory.Exists(filePath.SplitLastChar('\\')))
             {
@@ -129,34 +129,49 @@ namespace FS
                 return;
             }
 
-            using (FileStream stream = new FileStream(containerPath, FileMode.Open))
+            bool flag = false; // flag - does file exists
+
+            for (int i = 0; i < metadataBitmap.TotalBlocks; i++)
             {
-               // stream.Seek(metadata.FirstMetadataAddress, SeekOrigin.Begin);
-                using (var reader = new BinaryReader(stream))
+                if (metadataBitmap.IsBlockUsed(i))
                 {
-                    while (stream.Position < metadata.FirstFileAddress)
+                    long metadataAddress = fsMetadata.FirstFileMetadataAddress + (i * MetadataConstants.DefaultMetadataBlock);
+                    FileMetadata? metadata = ReadData(containerPath, metadataAddress, fsMetadata.MaxFileTitleSize);
+
+                    if (metadata != null)
                     {
-                        byte[] buffer = new byte[metadata.MaxFileTitleSize];
-                        int bytesRead = stream.Read(buffer, 0, metadata.MaxFileTitleSize);
-                        // Convert the bytes to a string
-                        string title = Encoding.UTF8.GetString(buffer, 0, bytesRead).TrimZeroes();
+                        if (metadata.FileName == fileName)
+                        { 
+                            flag = true;
 
-                        long size = reader.ReadInt64();
+                            using (FileStream stream = new FileStream(containerPath, FileMode.Open, FileAccess.Read))
+                            {
+                                using (FileStream file = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write))
+                                {
+                                    byte[] buffer = new byte[FileConstants.ReadFileBuffer];
+                                    for (int j = 0; j < metadata.BlockIndexesSize; j ++)
+                                    {
+                                        long blockAddress = fsMetadata.FirstFileAddress + (metadata.BlockIndexes[j] * fsMetadata.BlockSize);
+                                        stream.Seek(blockAddress, SeekOrigin.Begin);
 
-                        if (fileName == title)
-                        {
-                            long position = stream.Position;
-                            stream.Close();
-                            FSFile.WriteFileFromContainer(containerPath, filePath, position, size);
-                            break;
+                                        int bytesToRead = fsMetadata.BlockSize;
+                                        while (bytesToRead > 0)
+                                        {
+                                            int bytesRead = stream.Read(buffer, 0, Math.Min(bytesToRead, buffer.Length));
+                                            if (bytesRead == 0) break;
+
+                                            file.Write(buffer, 0, bytesRead);
+                                            bytesToRead -= bytesRead;
+                                        }
+                                    }
+                                }
+                            }
                         }
-
-                        stream.Seek(size, SeekOrigin.Current);
-
-                        if (stream.Position >= metadata.FirstFileAddress) break;
                     }
                 }
             }
+
+            if (!flag) Console.WriteLine(ErrorConstants.FileNotFound);
         }
     }
 }
