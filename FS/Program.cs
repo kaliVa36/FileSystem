@@ -28,10 +28,10 @@ namespace FileSystem
             {
                 fsMetadata = FSFileSystem.ReadData(path.AddFileName(), 0);
                 bitmapMetadata.LoadBitmap(path.AddFileName(), MetadataConstants.DefaultFileSystemMetadataSize, FileConstants.ReadBitmapBuffer);
-                // bitmapMetadata.PrintBitmap(); // for testing
+                bitmapMetadata.PrintBitmap(); // for testing
                 bitmapFile.LoadBitmap(path.AddFileName(), fsMetadata.FirstBitmapFileAddress, FileConstants.ReadBitmapBuffer);
-                // Console.WriteLine("Bitmap of files");
-                // bitmapFile.PrintBitmap();
+                //Console.WriteLine("Bitmap of files");
+                //bitmapFile.PrintBitmap();
             }
 
             while (true)
@@ -40,7 +40,7 @@ namespace FileSystem
                 string? command = Console.ReadLine();
                 if (command != null)
                 {
-                    FileCommands.callCommand(command.SplitByChar(' '), FSFileSystem.ReadData(path.AddFileName(), 0), path.AddFileName(), bitmapFile, bitmapMetadata);
+                    FileCommands.callCommand(command.SplitByChar(' '), fsMetadata, path.AddFileName(), bitmapFile, bitmapMetadata);
                 }
             }
         }

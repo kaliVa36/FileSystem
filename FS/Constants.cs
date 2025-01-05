@@ -12,6 +12,7 @@
         public const string InvalidCommand = "Invalid command";
         public const string TitleTooLong = "Title is too long. Max size for a title is ";
         public const string MetadataNoFreeSpace = "Free space for metadata not available";
+        public const string FileNotFound = "File not found";
     }
 
     public static class MetadataConstants
