@@ -1,49 +1,71 @@
 ﻿using Constants;
 using FS.data;
 using FS.Extensions;
-using System.Net.Http.Headers;
-using System.Text;
 using static FS.data.FSFile;
 
 namespace FS
 {
-    internal class FileCommands
+    internal class Commands
     {
-        public static void callCommand(string[] command, FileSystemMetadata metadata, string containerPath, FSBitmapManager fileBitmap, FSBitmapManager metadataBitmap)
+        public static void callCommand(string[] command, FileSystemMetadata metadata, string containerPath, FSBitmapManager fileBitmap, FSBitmapManager metadataBitmap, long currentDirectory)
         {
             switch (command[0])
             {
-                case var cmd when cmd == FileCommandsEnum.cpin.ToString():
-                    if (command.Length != (int)FileCommandsEnum.cp) 
+                case var cmd when cmd == CommandsEnum.cpin.ToString():
+                    if (command.Length != (int)CommandsEnum.cp) 
                     {
                         Console.WriteLine(ErrorConstants.InvalidCommand);
                         break;
                     }
-                    cpin(containerPath, command[1], command[2], metadata, fileBitmap, metadataBitmap);
+                    cpin(containerPath, command[1], command[2], metadata, fileBitmap, metadataBitmap, currentDirectory);
                     break;
-                case var cmd when cmd == FileCommandsEnum.ls.ToString():
-                    if (command.Length != (int)FileCommandsEnum.ls)
+                case var cmd when cmd == CommandsEnum.ls.ToString():
+                    if (command.Length != (int)CommandsEnum.ls)
                     {
                         Console.WriteLine(ErrorConstants.InvalidCommand);
                         break;
                     }
-                    ls(containerPath, metadata.MaxFileTitleSize, metadata, metadataBitmap);
+                    ls(containerPath, metadata.MaxFileTitleSize, metadata, metadataBitmap, currentDirectory);
                     break;
-                case var cmd when cmd == FileCommandsEnum.rm.ToString():
-                    if (command.Length != (int)FileCommandsEnum.rm) 
+                case var cmd when cmd == CommandsEnum.rm.ToString():
+                    if (command.Length != (int)CommandsEnum.rm) 
                     {
                         Console.WriteLine(ErrorConstants.InvalidCommand);
                         break;
                     }
-                    rm(containerPath, command[1], metadata, fileBitmap, metadataBitmap);
+                    rm(containerPath, command[1], metadata, fileBitmap, metadataBitmap, currentDirectory);
                     break;
-                case var cmd when cmd == FileCommandsEnum.cpout.ToString():
-                    if (command.Length != (int)FileCommandsEnum.cp) 
+                case var cmd when cmd == CommandsEnum.cpout.ToString():
+                    if (command.Length != (int)CommandsEnum.cp) 
                     {
                         Console.WriteLine(ErrorConstants.InvalidCommand);
                         break;
                     }
-                    cpout(containerPath, command[2], command[1], metadata, fileBitmap, metadataBitmap);
+                    cpout(containerPath, command[2], command[1], metadata, fileBitmap, metadataBitmap, currentDirectory);
+                    break;
+                case var cmd when cmd == CommandsEnum.md.ToString():
+                    if (command.Length != 2)
+                    {
+                        Console.WriteLine(ErrorConstants.InvalidCommand);
+                        break;
+                    }
+                    md(command[1], containerPath, metadata, fileBitmap, metadataBitmap, currentDirectory);
+                    break;
+                case var cmd when cmd == CommandsEnum.cd.ToString():
+                    if (command.Length != 2)
+                    {
+                        Console.WriteLine(ErrorConstants.InvalidCommand);
+                        break;
+                    }
+                    cd();
+                    break;
+                case var cmd when cmd == CommandsEnum.rd.ToString():
+                    if (command.Length != 2)
+                    {
+                        Console.WriteLine(ErrorConstants.InvalidCommand);
+                        break;
+                    }
+                    rd();
                     break;
                 default:
                     Console.WriteLine(ErrorConstants.InvalidCommand);
@@ -51,7 +73,7 @@ namespace FS
             }
         }
 
-        public static void cpin(string containerPath, string path, string fileName, FileSystemMetadata fsMetadata, FSBitmapManager fileBitmap, FSBitmapManager metadataBitmap)
+        public static void cpin(string containerPath, string path, string fileName, FileSystemMetadata fsMetadata, FSBitmapManager fileBitmap, FSBitmapManager metadataBitmap, long currentDirectory)
         {
             if (!File.Exists(path))
             { 
@@ -63,10 +85,10 @@ namespace FS
                 Console.WriteLine(ErrorConstants.TitleTooLong + fsMetadata.MaxFileTitleSize);
                 return;
             }
-            FSFile.ReadFile(containerPath, path, fileName, fsMetadata, fileBitmap, metadataBitmap);
+            FSFile.ReadFile(containerPath, path, fileName, fsMetadata, fileBitmap, metadataBitmap, currentDirectory);
         }
 
-        public static void ls(string containerPath, int fileTitleMaxSize, FileSystemMetadata fsMetadata, FSBitmapManager metadataBitmap)
+        public static void ls(string containerPath, int fileTitleMaxSize, FileSystemMetadata fsMetadata, FSBitmapManager metadataBitmap, long currentDirectory)
         {
             for (int i = 0; i < metadataBitmap.TotalBlocks; i++)
             {
@@ -77,13 +99,12 @@ namespace FS
                         fsMetadata.FirstFileMetadataAddress + (i * MetadataConstants.DefaultMetadataBlock),
                         fsMetadata.MaxFileTitleSize
                     );
-
-                    if (metadata != null) { Console.WriteLine(metadata.FileName + " " + metadata.Size); }
+                    if (metadata != null && !metadata.IsDirectory) { Console.WriteLine(metadata.FileName + " " + metadata.Size); }
                 }
             }
         }
 
-        public static void rm(string containerPath, string fileName, FileSystemMetadata fsMetadata, FSBitmapManager fileBitmap, FSBitmapManager metadataBitmap)
+        public static void rm(string containerPath, string fileName, FileSystemMetadata fsMetadata, FSBitmapManager fileBitmap, FSBitmapManager metadataBitmap, long currentDirectory)
         {
             bool flag = false; // flag - does file exist
 
@@ -96,7 +117,6 @@ namespace FS
 
                     if (metadata != null)
                     {
-                        Console.WriteLine(metadata.FileName + " " + fileName);
                         if (metadata.FileName == fileName)
                         {
                             flag = true;
@@ -121,7 +141,7 @@ namespace FS
             if (!flag) Console.WriteLine(ErrorConstants.FileNotFound);
         }
 
-        public static void cpout(string containerPath, string filePath, string fileName, FileSystemMetadata fsMetadata, FSBitmapManager fileBitmap, FSBitmapManager metadataBitmap)
+        public static void cpout(string containerPath, string filePath, string fileName, FileSystemMetadata fsMetadata, FSBitmapManager fileBitmap, FSBitmapManager metadataBitmap, long currentDirectory)
         {
             if (!Directory.Exists(filePath.SplitLastChar('\\')))
             {
@@ -172,6 +192,40 @@ namespace FS
             }
 
             if (!flag) Console.WriteLine(ErrorConstants.FileNotFound);
+        }
+
+        public static void md(string dirName, string containerPath, FileSystemMetadata fsMetadata, FSBitmapManager fileBitmap, FSBitmapManager metadataBitmap, long currentDirectory)
+        {
+            int block = metadataBitmap.FindFreeBlock();
+            if (block == -1) { Console.WriteLine(ErrorConstants.MetadataNoFreeSpace); }
+
+            FileMetadata? currentDirectoryMetadata = ReadData(containerPath, currentDirectory, fsMetadata.MaxFileTitleSize);
+
+            if (currentDirectoryMetadata == null)
+            { 
+                Console.WriteLine(ErrorConstants.FileNotFound);
+                return;
+            }
+
+            if (!FSFile.CanAddChild(256, fsMetadata.MaxFileTitleSize, currentDirectoryMetadata.ChildrenSize))
+            {
+                Console.WriteLine("No space");
+                return;
+            }
+
+            FileMetadata metadata = new FileMetadata(dirName, true, currentDirectory);
+
+            WriteMetadata(containerPath, fsMetadata.FirstFileMetadataAddress, fsMetadata.FirstBitmapMetadataAddress, metadata, fsMetadata.MaxFileTitleSize, fileBitmap, 256, currentDirectory, true);
+        }
+
+        public static void cd()
+        { 
+        
+        }
+
+        public static void rd()
+        { 
+        
         }
     }
 }

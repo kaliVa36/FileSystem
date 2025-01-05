@@ -23,16 +23,24 @@ namespace FileSystem
 
                 bitmapMetadata.InitializeBitmap(path.AddFileName(), MetadataConstants.DefaultFileSystemMetadataSize, FileConstants.ReadBitmapBuffer);
                 bitmapFile.InitializeBitmap(path.AddFileName(), fsMetadata.FirstBitmapFileAddress, FileConstants.ReadFileBuffer);
+
+                // Initializing the main directory
+                FSFile.FileMetadata rootMetadata = new FSFile.FileMetadata("root", true, -1);
+                FSFile.WriteMetadata(path.AddFileName(), fsMetadata.FirstFileMetadataAddress, fsMetadata.FirstBitmapMetadataAddress, rootMetadata, fsMetadata.MaxFileTitleSize, bitmapMetadata, MetadataConstants.DefaultMetadataBlock);
             }
             else
             {
                 fsMetadata = FSFileSystem.ReadData(path.AddFileName(), 0);
                 bitmapMetadata.LoadBitmap(path.AddFileName(), MetadataConstants.DefaultFileSystemMetadataSize, FileConstants.ReadBitmapBuffer);
-                bitmapMetadata.PrintBitmap(); // for testing
+                //bitmapMetadata.PrintBitmap(); // for testing
                 bitmapFile.LoadBitmap(path.AddFileName(), fsMetadata.FirstBitmapFileAddress, FileConstants.ReadBitmapBuffer);
                 //Console.WriteLine("Bitmap of files");
                 //bitmapFile.PrintBitmap();
             }
+
+            FSFile.ReadData(path.AddFileName(), fsMetadata.FirstFileMetadataAddress, fsMetadata.MaxFileTitleSize);
+
+            long currentDirectory = fsMetadata.FirstFileMetadataAddress;
 
             while (true)
             {
@@ -40,7 +48,7 @@ namespace FileSystem
                 string? command = Console.ReadLine();
                 if (command != null)
                 {
-                    FileCommands.callCommand(command.SplitByChar(' '), fsMetadata, path.AddFileName(), bitmapFile, bitmapMetadata);
+                    Commands.callCommand(command.SplitByChar(' '), fsMetadata, path.AddFileName(), bitmapFile, bitmapMetadata, currentDirectory);
                 }
             }
         }

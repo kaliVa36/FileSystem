@@ -91,7 +91,7 @@ namespace FS
                 }
             }
 
-            PrintBitmap();
+            //PrintBitmap();
         }
 
         public void InitializeBitmap(string containerPath, long startAddress, int blockSize)
@@ -115,6 +115,7 @@ namespace FS
 
         public void MarkAsUnused(int blockIndex)
         {
+            Console.WriteLine(blockIndex.ToString() + " " + TotalBlocks.ToString());
             if (blockIndex < 0 || blockIndex > TotalBlocks) throw new ArgumentOutOfRangeException(nameof(blockIndex));
 
             int byteIndex = blockIndex / 8; // 1 byte has 8 bits
