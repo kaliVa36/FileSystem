@@ -17,14 +17,13 @@
 
     public static class MetadataConstants
     {
-        public const int DefaultFileSystemFileMaxSize = 1073741824;
         public const int DefaultFileSystemFileNameCharacters = 20;
         public const int DefaultMetadataStorage = 10240; // 10 KB
         public const int DefaultBitmapFileSize = 32768; // 32 KB
         public const int DefaultMetadataBlock = 256;
         public const int DefaultBitmapMetadataSize = 40;
         public const int DefaultFileSystemMetadataSize = 48;
-        public const int DefaultMaxFileBlocksSize = 262139; // harcoded for now - if the block size is 4096
+        public const int DefaultBlockSize = 800000;
     }
 
     public static class FileConstants

@@ -45,14 +45,14 @@ namespace FS.data
         public static FileSystemMetadata InitializeFileSystem(string path)
         {
             // Creating the .bin file
-            // Adding chunk size
-            Console.WriteLine("Enter chunk size for working with files of this file system:");
-            string? chunkSize = Console.ReadLine();
-            while (chunkSize == null || !int.TryParse(chunkSize, out int parsedSize) || parsedSize <= 0)
-            {
-                Console.WriteLine("The chunk size should be a positive integer:");
-                chunkSize = Console.ReadLine();
-            }
+            // Adding block size
+            //Console.WriteLine("Enter chunk size for working with files of this file system:");
+            //string? blockSize = Console.ReadLine();
+            //while (blockSize == null || !int.TryParse(blockSize, out int parsedSize) || parsedSize <= 0)
+            //{
+            //    Console.WriteLine("The chunk size should be a positive integer:");
+            //    blockSize = Console.ReadLine();
+            //}
 
             string fileNameCharactersMaxSizeInput = inputComponent(
                 message: $"Do you want to set custom file name characters max size? (default is {MetadataConstants.DefaultFileSystemFileNameCharacters}) y/n",
@@ -69,7 +69,7 @@ namespace FS.data
                     firstFileAddress: MetadataConstants.DefaultFileSystemMetadataSize + MetadataConstants.DefaultBitmapMetadataSize + MetadataConstants.DefaultMetadataStorage + MetadataConstants.DefaultBitmapFileSize,
                     firstBitmapFileAddress: MetadataConstants.DefaultFileSystemMetadataSize + MetadataConstants.DefaultBitmapMetadataSize + MetadataConstants.DefaultMetadataStorage,
                     bitmapFileSize: MetadataConstants.DefaultBitmapFileSize,
-                    blockSize: int.Parse(chunkSize),
+                    blockSize: MetadataConstants.DefaultBlockSize,
                     maxFileTitleSize: int.Parse(fileNameCharactersMaxSizeInput)
             );
             WriteData(metadata, path, 0);
