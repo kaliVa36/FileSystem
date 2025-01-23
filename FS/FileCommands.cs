@@ -96,7 +96,6 @@ namespace FS
 
                     if (metadata != null)
                     {
-                        Console.WriteLine(metadata.FileName + " " + fileName);
                         if (metadata.FileName == fileName)
                         {
                             flag = true;
