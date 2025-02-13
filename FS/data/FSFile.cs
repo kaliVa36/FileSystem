@@ -10,15 +10,19 @@ namespace FS.data
         public class FileMetadata
         {
             public string FileName { get; set; }
-            public string ContentType { get; set; }
+            public bool IsDirectory { get; set; }
+            public long ParentAddress { get; set; }
+            public List<long> ChildrenAddresses { get; set; } = new List<long>();
+           // public string ContentType { get; set; }
             public int Size { get; set; }
             public int BlockIndexesSize { get; set; }
             public List<int> BlockIndexes { get; set; }
 
-            public FileMetadata(string fileName, int size, int blockAddressesSize, List<int> blockAddresses)
+            public FileMetadata(string fileName, int size, int blockAddressesSize, List<int> blockAddresses, long parentAddress, bool isDirectory)
             {
                 FileName = fileName;
-                // ContentType = contentType; // Will be added soon
+                IsDirectory = isDirectory;
+                ParentAddress = parentAddress;
                 Size = size;
                 BlockIndexes = blockAddresses;
                 BlockIndexesSize = blockAddressesSize;
@@ -102,7 +106,7 @@ namespace FS.data
         }
 
 
-        public static void ReadFile(string containerPath, string filePath, string newFileName, FileSystemMetadata fsMetadata, FSBitmapManager fileBitmap, FSBitmapManager metadataBitmap)
+        public static void ReadFile(string containerPath, string filePath, string newFileName, FileSystemMetadata fsMetadata, FSBitmapManager fileBitmap, FSBitmapManager metadataBitmap, long parentAddress)
         {
             List<int> indexes = new List<int>();
             int fileSize = 0;
@@ -133,7 +137,7 @@ namespace FS.data
             }
 
             fileBitmap.StoreBitmap(containerPath, fsMetadata.FirstBitmapFileAddress, FileConstants.ReadFileBuffer);
-            FileMetadata metadata = new FileMetadata(newFileName, fileSize, indexes.Count, indexes);
+            FileMetadata metadata = new FileMetadata(newFileName, fileSize, indexes.Count, indexes, parentAddress, false);
             WriteMetadata(containerPath, fsMetadata.FirstFileMetadataAddress, fsMetadata.FirstBitmapMetadataAddress, metadata, fsMetadata.MaxFileTitleSize, metadataBitmap, MetadataConstants.DefaultMetadataBlock);
         }
 
@@ -173,6 +177,8 @@ namespace FS.data
 
                     int bytesRead = reader.Read(buffer, 0, maxFileTitleSize);
                     string title = Encoding.UTF8.GetString(buffer).TrimZeroes();
+                    bool isDirectory = reader.ReadBoolean();
+                    long parentAddress = reader.ReadInt64();
                     //Console.WriteLine(title);
                     int size = reader.ReadInt32();
                     //Console.WriteLine(size);
@@ -187,7 +193,12 @@ namespace FS.data
                         //Console.WriteLine(address);
                     }
 
-                    return new FileMetadata(title, size, blockAddressesSize, blockIndexes);
+                    if (isDirectory)
+                    { 
+                        // read child addresses
+                    }
+
+                    return new FileMetadata(title, size, blockAddressesSize, blockIndexes, parentAddress, isDirectory);
                 }
             }
         }
